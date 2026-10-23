@@ -1,16 +1,11 @@
-Minha Central de Câmeras - revisão 1.1.0
+Minha Central de Cameras - V3 / 1.2.0
 
-Este ZIP contém a estrutura completa de arquivos de texto do projeto Android.
-Faça upload dos arquivos nos mesmos caminhos do repositório GitHub, substituindo os existentes.
-A pasta .github pode ficar oculta em alguns gerenciadores de arquivos Android.
+ERRO IDENTIFICADO: NullPointerException em androidx.media3.exoplayer.rtsp.RtspClient.MessageListener.handleRtspResponse.
 
-Mudanças:
-- Registro da última falha do Android, exibido ao reabrir o aplicativo.
-- RTSP forçado por TCP, tratamento de erros e descarte do player.
-- Descoberta ONVIF protegida contra atualização de telas antigas.
-- Versão atualizada para 1.1.0 (versionCode 2).
-- Fluxo de senha NVR sem persistir senha.
+CORRECAO PRINCIPAL: atualizadas as 3 dependencias Media3 da antiga 1.4.1 para a versao estavel 1.11.1. A mudanca pode corrigir problemas da biblioteca RTSP, mas nao garante compatibilidade com todas as respostas da camera Yoosee.
 
-IMPORTANTE: código não foi compilado neste ambiente. A compilação será validada pelo GitHub Actions.
-O relatório de falha pode conter nomes de classes, caminhos e mensagens técnicas; revise antes de compartilhar.
-Não garante suporte a protocolos proprietários Yoosee/P2P.
+Substitua os arquivos nas mesmas pastas no repositorio GitHub, sem criar pastas extras. Aguarde o GitHub Actions ficar verde, baixe e instale o APK V1.2.0.
+
+Se continuar fechando, envie o NOVO relatorio de falha. Se apenas aparecer erro de reproducao, envie o codigo exibido.
+
+A senha RTSP/NVR nao deve ser compartilhada.
