@@ -1,11 +1,9 @@
-Minha Central de Cameras - V3 / 1.2.0
+MINHA CENTRAL DE CÂMERAS V4 — 1.3.0
 
-ERRO IDENTIFICADO: NullPointerException em androidx.media3.exoplayer.rtsp.RtspClient.MessageListener.handleRtspResponse.
+Recursos novos: favoritos, ordenação de câmeras, contagem, painel de diagnóstico e cópia de relatório sem senha.
+Corrigido compileSdk para 36, exigido pelo Media3 1.11.1.
 
-CORRECAO PRINCIPAL: atualizadas as 3 dependencias Media3 da antiga 1.4.1 para a versao estavel 1.11.1. A mudanca pode corrigir problemas da biblioteca RTSP, mas nao garante compatibilidade com todas as respostas da camera Yoosee.
+Substitua os arquivos no GitHub mantendo EXATAMENTE os caminhos do ZIP.
+Não crie uma segunda MainActivity.kt.
 
-Substitua os arquivos nas mesmas pastas no repositorio GitHub, sem criar pastas extras. Aguarde o GitHub Actions ficar verde, baixe e instale o APK V1.2.0.
-
-Se continuar fechando, envie o NOVO relatorio de falha. Se apenas aparecer erro de reproducao, envie o codigo exibido.
-
-A senha RTSP/NVR nao deve ser compartilhada.
+ATENÇÃO: Não foi possível compilar o APK neste ambiente. O erro de NullPointerException da biblioteca RTSP pode persistir mesmo após atualizar a dependência; é preciso testar com a câmera real. Nenhuma senha é salva ou incluída no diagnóstico.
