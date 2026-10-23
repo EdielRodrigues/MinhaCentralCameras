@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
  private fun home() {
   stopPlayback()
   page("Minha Central de Câmeras")
-  root.addView(label("Câmeras IP • ONVIF • RTSP | versão 1.1.0", 14f))
+  root.addView(label("Câmeras IP • ONVIF • RTSP | versão 1.3.0", 14f))
   val crash = prefs.getString("last_crash", null)
   if (!crash.isNullOrBlank()) {
    root.addView(button("⚠ Ver relatório da última falha") {
@@ -96,12 +96,18 @@ class MainActivity : AppCompatActivity() {
   })
   root.addView(button("Buscar ONVIF no Wi-Fi") { discover() })
   root.addView(button("Configurar Wi-Fi") { startActivity(Intent(Settings.ACTION_WIFI_SETTINGS)) })
-  root.addView(label("Minhas câmeras", 20f))
+  root.addView(label("Painel de câmeras", 20f))
   val list = cameras
-  for (i in 0 until list.length()) {
+  root.addView(label("${list.length()} câmera(s) cadastrada(s) • Favoritos primeiro", 14f))
+  val indexes = (0 until list.length()).sortedWith(compareByDescending<Int> {
+   list.optJSONObject(it)?.optBoolean("favorite", false) == true
+  }.thenBy { list.optJSONObject(it)?.optString("name", "")?.lowercase() ?: "" })
+  for (i in indexes) {
    val camera = list.optJSONObject(i) ?: continue
-   root.addView(button("▶ ${camera.optString("name")} • ${camera.optString("host")}") { cameraScreen(i) })
+   val star = if (camera.optBoolean("favorite", false)) "★" else "☆"
+   root.addView(button("$star  ${camera.optString("name")} • ${camera.optString("host")}") { cameraScreen(i) })
   }
+  root.addView(button("Diagnóstico e informações") { diagnostics() })
   root.addView(label("Use as credenciais RTSP/NVR da câmera. A senha não é armazenada neste aplicativo.", 13f))
  }
  private fun editCamera(existing: JSONObject? = null, index: Int = -1, scanned: String = "") {
@@ -123,7 +129,7 @@ class MainActivity : AppCompatActivity() {
     if (!Regex("^[a-zA-Z0-9.-]+$").matches(h) || p == null || p !in 1..65535) {
      Toast.makeText(this, "Confira IP e porta", Toast.LENGTH_LONG).show(); return@setOnClickListener
     }
-    val data = JSONObject().put("name", name.text.toString().trim()).put("host", h)
+    val data = JSONObject().put("favorite", existing?.optBoolean("favorite", false) ?: false).put("name", name.text.toString().trim()).put("host", h)
      .put("port", p).put("path", path.text.toString().trim())
      .put("user", user.text.toString().trim()).put("qr", qr.text.toString().trim())
     val list = cameras
@@ -139,6 +145,13 @@ class MainActivity : AppCompatActivity() {
   val c = cameras.optJSONObject(index) ?: return home()
   page(c.optString("name", "Câmera"))
   root.addView(label("${c.optString("host")}:${c.optInt("port", 554)}${c.optString("path")}", 14f))
+  root.addView(button(if (c.optBoolean("favorite", false)) "★ Remover dos favoritos" else "☆ Adicionar aos favoritos") {
+   val arr = cameras
+   val selected = arr.optJSONObject(index) ?: return@button
+   selected.put("favorite", !selected.optBoolean("favorite", false))
+   prefs.edit().putString("list", arr.toString()).apply()
+   cameraScreen(index)
+  })
   root.addView(button("▶ Abrir imagem ao vivo") { requestPlayback(c) })
   root.addView(button("Editar configuração") { editCamera(c, index) })
   root.addView(button("Excluir câmera") {
@@ -148,6 +161,22 @@ class MainActivity : AppCompatActivity() {
      for (j in 0 until all.length()) if (j != index) all.optJSONObject(j)?.let { result.put(it) }
      prefs.edit().putString("list", result.toString()).apply(); home()
     }.show()
+  })
+  root.addView(button("Voltar") { home() })
+ }
+ private fun diagnostics() {
+  stopPlayback()
+  page("Diagnóstico da central")
+  root.addView(label("Versão: 1.3.0 | Android: ${android.os.Build.VERSION.RELEASE}", 15f))
+  root.addView(label("Câmeras cadastradas: ${cameras.length()}", 15f))
+  root.addView(label("Wi-Fi local necessário para RTSP direto. Acesso remoto exige VPN ou serviço compatível.", 14f))
+  val crash = prefs.getString("last_crash", null)
+  root.addView(label(if (crash.isNullOrBlank()) "Nenhum relatório de falha salvo." else "Existe um relatório de falha salvo.", 14f))
+  root.addView(button("Copiar diagnóstico (sem senhas)") {
+   val message = "Minha Central 1.3.0 | Android ${android.os.Build.VERSION.RELEASE} | Câmeras ${cameras.length()} | Erro: ${crash ?: "nenhum"}"
+   val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+   clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Diagnóstico", message))
+   Toast.makeText(this, "Diagnóstico copiado", Toast.LENGTH_SHORT).show()
   })
   root.addView(button("Voltar") { home() })
  }
