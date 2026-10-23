@@ -1,7 +1,7 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
  namespace = "br.com.minhacentral.cameras"
- compileSdk = 35
+ compileSdk = 36
  defaultConfig {
   applicationId = "br.com.minhacentral.cameras"
   minSdk = 26
