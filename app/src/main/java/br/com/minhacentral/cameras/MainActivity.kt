@@ -14,6 +14,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.ui.PlayerView
 import com.google.zxing.integration.android.IntentIntegrator
 import org.json.JSONArray
@@ -88,23 +89,66 @@ class MainActivity : AppCompatActivity() {
   val password=field("Senha RTSP (não será salva)","",true)
   AlertDialog.Builder(this).setTitle("Autenticação RTSP").setView(password).setNegativeButton("Cancelar",null).setPositiveButton("Conectar") { _,_ -> play(c,password.text.toString()) }.show()
  }
- private fun play(c:JSONObject,password:String) {
+ private fun play(c: JSONObject, password: String) {
+  player?.release()
+  player = null
   page("Ao vivo: ${c.optString("name")}")
-  val video=PlayerView(this).apply { layoutParams=LinearLayout.LayoutParams(-1,650) }
+  val video = PlayerView(this).apply {
+   layoutParams = LinearLayout.LayoutParams(-1, 650)
+  }
   root.addView(video)
-  val status=label("Conectando...",14f); root.addView(status)
+  val status = label("Preparando conexão RTSP...", 14f)
+  root.addView(status)
   root.addView(button("Fechar transmissão") { home() })
-  val host=c.optString("host"); val port=c.optInt("port"); val path=c.optString("path").let { if(it.startsWith("/")) it else "/$it" }
-  val user=c.optString("user")
-  val auth=if(user.isNotEmpty()) "${Uri.encode(user)}:${Uri.encode(password)}@" else ""
-  val uri="rtsp://$auth$host:$port$path"
+
+  val host = c.optString("host").trim()
+  val port = c.optInt("port", 554)
+  val path = c.optString("path", "/onvif1").let {
+   if (it.startsWith("/")) it else "/$it"
+  }
+  val username = c.optString("user").trim()
+  if (host.isBlank() || port !in 1..65535) {
+   status.text = "Endereço ou porta RTSP inválidos."
+   return
+  }
+  // Uri.Builder codifica caracteres especiais da senha sem expô-la na tela.
+  val uriBuilder = Uri.Builder().scheme("rtsp")
+   .encodedAuthority("$host:$port")
+   .encodedPath(path)
+  val streamUri = if (username.isNotEmpty()) {
+   uriBuilder.encodedAuthority(
+    "${Uri.encode(username)}:${Uri.encode(password)}@$host:$port"
+   ).build()
+  } else {
+   uriBuilder.build()
+  }
   try {
-   player=ExoPlayer.Builder(this).build().also { p ->
-    video.player=p
-    p.addListener(object:Player.Listener { override fun onPlayerError(error:PlaybackException) { status.text="Falha ao reproduzir: ${error.errorCodeName}. Confira a senha, usuário e compatibilidade RTSP." } })
-    p.setMediaItem(MediaItem.fromUri(uri)); p.prepare(); p.playWhenReady=true
-   }
-  } catch(e:Exception) { status.text="Erro: ${e.localizedMessage}" }
+   // TCP evita falhas comuns de transporte RTP/UDP em redes domésticas.
+   val mediaSource = RtspMediaSource.Factory()
+    .setForceUseRtpTcp(true)
+    .createMediaSource(MediaItem.fromUri(streamUri))
+   val exoPlayer = ExoPlayer.Builder(this).build()
+   player = exoPlayer
+   video.player = exoPlayer
+   exoPlayer.addListener(object : Player.Listener {
+    override fun onPlayerError(error: PlaybackException) {
+     status.text = "Não foi possível abrir a imagem (${error.errorCodeName}). " +
+      "Verifique usuário e senha NVR, porta RTSP e compatibilidade da câmera."
+     android.util.Log.e("MinhaCentralRTSP", "Falha de reprodução", error)
+    }
+    override fun onPlaybackStateChanged(state: Int) {
+     if (state == Player.STATE_READY) status.text = "Transmissão conectada."
+    }
+   })
+   exoPlayer.setMediaSource(mediaSource)
+   exoPlayer.prepare()
+   exoPlayer.playWhenReady = true
+  } catch (error: Exception) {
+   android.util.Log.e("MinhaCentralRTSP", "Falha ao iniciar reprodução", error)
+   status.text = "Erro ao iniciar o vídeo: ${error.javaClass.simpleName}"
+   player?.release()
+   player = null
+  }
  }
  private fun discover() {
   page("Busca ONVIF")
