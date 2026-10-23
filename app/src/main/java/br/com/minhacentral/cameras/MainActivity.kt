@@ -117,11 +117,12 @@ class MainActivity : AppCompatActivity() {
     val multicast = wifi.createMulticastLock("onvif-discovery"); multicast.setReferenceCounted(false); multicast.acquire()
     try { DatagramSocket().use { sock ->
      sock.soTimeout=1600
-     val probe="""<?xml version="1.0" encoding="UTF-8"?><e:Envelope xmlns:e="http://www.w3.org/2003/05/soap-envelope" xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery" xmlns:dn="http://www.onvif.org/ver10/network/wsdl"><e:Header><w:MessageID>uuid:${UUID.randomUUID()}</w:MessageID><w:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To><w:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</w:Action></e:Header><e:Body><d:Probe/></e:Body></e:Envelope>"""
+     val probe="""<?xml version="1.0" encoding="UTF-8"?><e:Envelope xmlns:e="http://www.w3.org/2003/05/soap-envelope" xmlns:w="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery"><e:Header><w:MessageID>uuid:${UUID.randomUUID()}</w:MessageID><w:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To><w:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</w:Action></e:Header><e:Body><d:Probe/></e:Body></e:Envelope>"""
      val bytes=probe.toByteArray(); sock.send(DatagramPacket(bytes,bytes.size,InetAddress.getByName("239.255.255.250"),3702))
      repeat(5) {
       try { val buffer=ByteArray(8192); val packet=DatagramPacket(buffer,buffer.size); sock.receive(packet); found.add(packet.address.hostAddress?:"") } catch(_:Exception) { }
      }
+    }
     } finally { multicast.release() }
    } catch(_:Exception) { }
    runOnUiThread {
