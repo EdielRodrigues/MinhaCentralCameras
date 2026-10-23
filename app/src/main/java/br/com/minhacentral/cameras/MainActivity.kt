@@ -197,7 +197,7 @@ class MainActivity : AppCompatActivity() {
             media.addOption(":network-caching=800")
             p.media = media
             media.release()
-            if (!p.play()) status.text = "Não foi possível iniciar o reprodutor."
+            p.play()
         } catch (e: Exception) {
             status.text = "Erro ao iniciar LibVLC: ${e.javaClass.simpleName}"
             stopPlayback()
